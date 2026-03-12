@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8080';
+const API_BASE = 'https://contribution-backend-3ka2.onrender.com';
 
 const TOKEN_KEY = 'contribution_token';
 
