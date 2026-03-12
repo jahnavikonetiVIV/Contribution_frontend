@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { fetchClassificationList, bulkUploadDecision, downloadClassification } from '../api/ingestion';
 import './MISContent.css';
 import './Classification.css';
@@ -71,6 +71,7 @@ function ClassificationTab() {
 
   useEffect(() => {
     loadRecords();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleApplyFilters = () => {
@@ -232,6 +233,7 @@ function ImproperWorklistTab() {
 
   useEffect(() => {
     loadRecords();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleApplyFilters = () => {

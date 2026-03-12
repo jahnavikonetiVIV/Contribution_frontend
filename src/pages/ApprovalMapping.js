@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { fetchDdnDropdowns, saveManualMapping, fetchAutoTaggedRecords, fetchManualMappingRecords } from '../api/ingestion';
 import './MISContent.css';
 import './ApprovalMapping.css';
