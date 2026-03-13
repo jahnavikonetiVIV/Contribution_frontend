@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { fetchDdnDropdowns, saveManualMapping, fetchAutoTaggedRecords, fetchManualMappingRecords } from '../api/ingestion';
+import { fetchFundRequestDropdowns, saveManualMapping, fetchAutoTaggedRecords, fetchManualMappingRecords } from '../api/ingestion';
 import './MISContent.css';
 import './ApprovalMapping.css';
 
@@ -117,14 +117,14 @@ function ManualMappingTab() {
     ifscCode: '',
     transactionAmount: '',
     initialAmount: '',
-    initialCommitmentDdnId: '',
+    initialCommitmentFundRequestId: '',
     topupAmount: '',
-    topupDdnId: '',
+    topupFundRequestId: '',
     excessAmount: '',
     remarks: '',
   });
-  const [initialDdnOptions, setInitialDdnOptions] = useState([]);
-  const [topupDdnOptions, setTopupDdnOptions] = useState([]);
+  const [initialFundRequestOptions, setInitialFundRequestOptions] = useState([]);
+  const [topupFundRequestOptions, setTopupFundRequestOptions] = useState([]);
   const [transactionAmountFetched, setTransactionAmountFetched] = useState(false);
   const [manualRecords, setManualRecords] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -149,8 +149,8 @@ function ManualMappingTab() {
     loadManualRecords();
   }, []);
 
-  const getDdnId = (item) => item?.ddnId ?? item?.id ?? item?.compositeId ?? item?.value ?? (typeof item === 'string' ? item : '');
-  const getDdnLabel = (item) => (typeof item === 'object' ? item?.ddnId ?? item?.compositeId ?? item?.name ?? item?.label ?? item?.id : item) ?? '';
+  const getFundRequestId = (item) => item?.fundRequestId ?? item?.ddnId ?? item?.id ?? item?.compositeId ?? item?.value ?? (typeof item === 'string' ? item : '');
+  const getFundRequestLabel = (item) => (typeof item === 'object' ? item?.fundRequestId ?? item?.ddnId ?? item?.compositeId ?? item?.name ?? item?.label ?? item?.id : item) ?? '';
 
   const handleFetchDetails = async () => {
     if (!form.utr?.trim()) {
@@ -160,26 +160,22 @@ function ManualMappingTab() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetchDdnDropdowns(form.utr, form.ifscCode);
-      const data = response?.data ?? response;
+      const response = await fetchFundRequestDropdowns(form.utr, form.ifscCode);
+      const payload = response?.data ?? response;
+      const data = payload?.data ?? payload;
       const amount = data.transactionAmount ?? data.amount ?? data.totalAmount;
-      const initial = data.initialCommitmentDdns ?? data.initialDdns ?? data.commitmentDdns ?? [];
-      const topup = data.topupDdns ?? data.topupDdnList ?? [];
+      const initial = data.initialCommitmentFundRequests ?? data.initialCommitmentDdns ?? data.initialDdns ?? data.commitmentDdns ?? [];
+      const topup = data.topupFundRequests ?? data.topupDdns ?? data.topupDdnList ?? [];
 
       const initialArr = Array.isArray(initial) ? initial : [];
       const topupArr = Array.isArray(topup) ? topup : [];
 
-      setInitialDdnOptions(initialArr);
-      setTopupDdnOptions(topupArr);
-
-      const firstInitialId = initialArr.length > 0 ? getDdnId(initialArr[0]) : '';
-      const firstTopupId = topupArr.length > 0 ? getDdnId(topupArr[0]) : '';
+      setInitialFundRequestOptions(initialArr);
+      setTopupFundRequestOptions(topupArr);
 
       setForm((f) => ({
         ...f,
         transactionAmount: amount != null ? String(amount) : f.transactionAmount,
-        initialCommitmentDdnId: firstInitialId,
-        topupDdnId: firstTopupId,
       }));
       setTransactionAmountFetched(amount != null);
     } catch (err) {
@@ -195,8 +191,22 @@ function ManualMappingTab() {
   const transactionNum = Number(form.transactionAmount) || 0;
   const sumMatches = transactionNum > 0 && initialNum + topupNum + excessNum === transactionNum;
 
+  const initialFundRequestSelected = Boolean(form.initialCommitmentFundRequestId?.trim());
+  const topupFundRequestSelected = Boolean(form.topupFundRequestId?.trim());
+  const initialAmountRequired = initialFundRequestSelected && !form.initialAmount?.trim();
+  const topupAmountRequired = topupFundRequestSelected && !form.topupAmount?.trim();
+  const validationOk = !initialAmountRequired && !topupAmountRequired;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (initialAmountRequired) {
+      setError('Initial Amount is required when Initial Commitment Fund Request is selected');
+      return;
+    }
+    if (topupAmountRequired) {
+      setError('Topup Amount is required when Topup Fund Request is selected');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -206,14 +216,14 @@ function ManualMappingTab() {
         ifscCode: '',
         transactionAmount: '',
         initialAmount: '',
-        initialCommitmentDdnId: '',
+        initialCommitmentFundRequestId: '',
         topupAmount: '',
-        topupDdnId: '',
+        topupFundRequestId: '',
         excessAmount: '',
         remarks: '',
       });
-      setInitialDdnOptions([]);
-      setTopupDdnOptions([]);
+      setInitialFundRequestOptions([]);
+      setTopupFundRequestOptions([]);
       setTransactionAmountFetched(false);
       loadManualRecords();
     } catch (err) {
@@ -273,49 +283,49 @@ function ManualMappingTab() {
             <h4 className="breakdown-title">Amount Breakdown</h4>
             <div className="form-grid">
               <div className="form-field">
-                <label>Initial Amount</label>
+                <label>Initial Amount {initialFundRequestSelected ? '*' : ''}</label>
                 <input
                   type="text"
                   placeholder="Enter Initial Amount"
                   value={form.initialAmount}
                   onChange={(e) => setForm((f) => ({ ...f, initialAmount: e.target.value }))}
+                  required={initialFundRequestSelected}
                 />
               </div>
               <div className="form-field">
-                <label>Initial Commitment DDN ID *</label>
+                <label>Initial Commitment Fund Request ID</label>
                 <select
-                  value={form.initialCommitmentDdnId}
-                  onChange={(e) => setForm((f) => ({ ...f, initialCommitmentDdnId: e.target.value }))}
-                  required
+                  value={form.initialCommitmentFundRequestId}
+                  onChange={(e) => setForm((f) => ({ ...f, initialCommitmentFundRequestId: e.target.value }))}
                 >
-                  <option value="">Select DDN</option>
-                  {initialDdnOptions.map((opt, i) => (
-                    <option key={i} value={getDdnId(opt)}>
-                      {getDdnLabel(opt)}
+                  <option value="">Select Fund Request</option>
+                  {initialFundRequestOptions.map((opt, i) => (
+                    <option key={i} value={getFundRequestId(opt)}>
+                      {getFundRequestLabel(opt)}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="form-field">
-                <label>Topup Amount</label>
+                <label>Topup Amount {topupFundRequestSelected ? '*' : ''}</label>
                 <input
                   type="text"
                   placeholder="Enter Topup Amount"
                   value={form.topupAmount}
                   onChange={(e) => setForm((f) => ({ ...f, topupAmount: e.target.value }))}
+                  required={topupFundRequestSelected}
                 />
               </div>
               <div className="form-field">
-                <label>Topup DDN ID {topupDdnOptions.length > 0 ? '*' : ''}</label>
+                <label>Topup Fund Request ID</label>
                 <select
-                  value={form.topupDdnId}
-                  onChange={(e) => setForm((f) => ({ ...f, topupDdnId: e.target.value }))}
-                  required={topupDdnOptions.length > 0}
+                  value={form.topupFundRequestId}
+                  onChange={(e) => setForm((f) => ({ ...f, topupFundRequestId: e.target.value }))}
                 >
-                  <option value="">Select DDN</option>
-                  {topupDdnOptions.map((opt, i) => (
-                    <option key={i} value={getDdnId(opt)}>
-                      {getDdnLabel(opt)}
+                  <option value="">Select Fund Request</option>
+                  {topupFundRequestOptions.map((opt, i) => (
+                    <option key={i} value={getFundRequestId(opt)}>
+                      {getFundRequestLabel(opt)}
                     </option>
                   ))}
                 </select>
@@ -340,7 +350,7 @@ function ManualMappingTab() {
               </div>
             </div>
           </div>
-          <button type="submit" className="save-mapping-btn" disabled={saving || !sumMatches}>
+          <button type="submit" className="save-mapping-btn" disabled={saving || !sumMatches || !validationOk}>
             {saving ? 'Saving...' : 'Save Mapping'}
           </button>
         </form>

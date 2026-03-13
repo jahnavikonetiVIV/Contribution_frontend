@@ -73,22 +73,22 @@ export async function bulkUploadDecision(file) {
 
 export async function fetchAutoTaggedRecords() {
   const { data } = await axiosInstance.get(
-    '/api/v1/contribution-management/ddn-mappings/auto-tagged'
+    '/api/v1/contribution-management/fund-request-mappings/auto-tagged'
   );
   return Array.isArray(data) ? data : data?.content ?? data?.data ?? [];
 }
 
 export async function fetchManualMappingRecords() {
   const { data } = await axiosInstance.get(
-    '/api/v1/contribution-management/ddn-mappings/manual'
+    '/api/v1/contribution-management/fund-request-mappings/manual'
   );
   const payload = data?.data ?? data;
   return Array.isArray(payload) ? payload : payload?.content ?? [];
 }
 
-export async function fetchDdnDropdowns(utr, ifscCode) {
+export async function fetchFundRequestDropdowns(utr, ifscCode) {
   const { data } = await axiosInstance.post(
-    '/api/v1/contribution-management/ddn-mappings/dropdowns',
+    '/api/v1/contribution-management/fund-request-mappings/dropdowns',
     { utr, ifscCode: ifscCode || '' }
   );
   return data ?? {};
@@ -96,15 +96,15 @@ export async function fetchDdnDropdowns(utr, ifscCode) {
 
 export async function saveManualMapping(payload) {
   const { data } = await axiosInstance.post(
-    '/api/v1/contribution-management/ddn-mappings/manual',
+    '/api/v1/contribution-management/fund-request-mappings/manual',
     {
       utr: payload.utr,
       transactionAmount: Number(payload.transactionAmount) || 0,
       ifscCode: payload.ifscCode || '',
       initialAmount: Number(payload.initialAmount) || 0,
-      initialCommitmentDdnId: payload.initialCommitmentDdnId || '',
+      initialCommitmentFundRequestId: payload.initialCommitmentFundRequestId || '',
       topupAmount: Number(payload.topupAmount) || 0,
-      topupDdnId: payload.topupDdnId || '',
+      topupFundRequestId: payload.topupFundRequestId || '',
       excessAmount: Number(payload.excessAmount) || 0,
       remarks: payload.remarks || '',
     }
